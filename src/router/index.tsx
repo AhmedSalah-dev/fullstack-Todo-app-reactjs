@@ -53,7 +53,7 @@ const router = createBrowserRouter(
               redirectPath="/login"
               data={userData}
             >
-              <TodosPage />
+              <TodosPage/>
             </ProtectedRoute>
           }
         />

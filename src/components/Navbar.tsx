@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 
+
 const Navbar = () => {
   const { pathname } = useLocation();
   const storageKey = "loggedInUser";
@@ -7,6 +8,8 @@ const Navbar = () => {
   const userData = userDataString ? JSON.parse(userDataString) : null;
   const onLogout = () => {
     localStorage.removeItem(storageKey);
+    
+
     setTimeout(() => {
       location.replace(pathname);
     }, 1500);
