@@ -9,6 +9,10 @@ import axiosInstance from "../config/axios.config";
 import TodoSkeleton from "./ui/TodoSkeleton";
 import { faker } from '@faker-js/faker';
 import { ITodo } from "../interfaces";
+import InputErrorMessage from "./ui/InputErrorMessage";
+import { ValidationError } from "yup";
+import {validationModalSchema} from "../validation"
+import * as Yup from "yup"
 
 const TodoList = () => {
   
@@ -21,6 +25,7 @@ const [isEditModalOpen,setIsEditModalOpen]= useState(false);
 const [isUpdating,setIsUpdating]= useState(false);
 const [isOpenConfirmModal,SetIsOpenConfirmModal]= useState(false);
 const [isOpenAddModal,SetIsOpenAddModal]= useState(false);
+const[errors,setErrors]= useState<{[key:string]: string}>({})
 const [todoToAdd,setTodoToAdd]= useState({
   
   title: "",
@@ -89,6 +94,10 @@ const {isLoading, data} = useCustomQuery({
         ...todoToAdd,
         [name]: value
       })
+      setErrors({
+        ...errors,
+        [name]: "",
+      })
   };
   const onChangeHandler = (evt:ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const {value, name} = evt.target
@@ -96,6 +105,10 @@ const {isLoading, data} = useCustomQuery({
       setTodoToEdit({
         ...todoToEdit,
         [name]: value
+      });
+      setErrors({
+        ...errors,
+        [name]: "",
       })
   };
 
@@ -121,6 +134,7 @@ const {isLoading, data} = useCustomQuery({
     evt.preventDefault();
     setIsUpdating(true);
     try {
+     await validationModalSchema.validate(todoToEdit, {abortEarly: false})
      const{title, description}=todoToEdit
      const {status} = await axiosInstance.put(`/todos/${todoToEdit.id}`, {data: {title,description}} , {
       headers: {
@@ -134,8 +148,14 @@ const {isLoading, data} = useCustomQuery({
     setQueryVersion(prev => prev+1)
   }
   
-} catch (error) {
-  console.log(error);
+} catch (err:any) {
+  const newErrors : { [key:string]: string} ={};
+  err.inner.forEach((ValidationError: Yup.ValidationError) => {
+    if (ValidationError.path) {
+      newErrors[ValidationError.path] = ValidationError.message;
+    }
+  });
+  setErrors(newErrors);
 } finally {
   setIsUpdating(false);
 }
@@ -145,6 +165,7 @@ const {isLoading, data} = useCustomQuery({
     evt.preventDefault();
     setIsUpdating(true);
     try {
+     await validationModalSchema.validate(todoToEdit, {abortEarly: false})
      const{title, description}=todoToAdd
      const {status} = await axiosInstance.post(`/todos`, {data: {title,description,user:[userData.user.id]}} , {
       headers: {
@@ -158,8 +179,14 @@ const {isLoading, data} = useCustomQuery({
     setQueryVersion(prev => prev+1)
   }
   
-} catch (error) {
-  console.log(error);
+} catch (err:any) {
+  const newErrors : { [key:string]: string} ={};
+  err.inner.forEach((ValidationError: Yup.ValidationError) => {
+    if (ValidationError.path) {
+      newErrors[ValidationError.path] = ValidationError.message;
+    }
+  });
+  setErrors(newErrors);
 } finally {
   setIsUpdating(false);
 }
@@ -239,7 +266,9 @@ const {isLoading, data} = useCustomQuery({
             title="Add New Todo">
             <form onSubmit={onSubmitAddTodo}>
               <Input name="title" value={todoToAdd.title} onChange={onChangeAddTodoHandler}/>
+              {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
               <Textarea name="description" value={todoToAdd.description} onChange={onChangeAddTodoHandler}/>
+              {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
               <div className="mt-4 flex space-x-5">
                   <Button className="bg-indigo-700 hover:bg-indigo-800" isLoading={isUpdating} >Done</Button>
                   <Button type="button" variant={"cancel"} onClick={onCloseAddModal}>Cancel</Button>
@@ -254,7 +283,9 @@ const {isLoading, data} = useCustomQuery({
             title="Edit this todo">
             <form onSubmit={onSubmitEditTodo}>
               <Input name="title" value={todoToEdit.title} onChange={onChangeHandler}/>
+              {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
               <Textarea name="description" value={todoToEdit.description} onChange={onChangeHandler}/>
+              {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
               <div className="mt-4 flex space-x-5">
                   <Button className="bg-indigo-700 hover:bg-indigo-800" isLoading={isUpdating} >Update</Button>
                   <Button type="button" variant={"cancel"} onClick={onCloseEditModal}>Cancel</Button>

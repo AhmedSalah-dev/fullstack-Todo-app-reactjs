@@ -27,3 +27,16 @@ export const loginSchema = yup
       .min(6, "Password should be at least 6 charachters."),
   })
   .required();
+
+export const validationModalSchema = yup
+  .object({
+    title: yup
+      .string()
+      .required("Title is required")
+      .min(6,"Title should be at least 6 charachters"),
+    description: yup
+      .string()
+      .required("Description is required")
+      .min(6, "Description should be at least 6 charachters."),
+  })
+  .required();
